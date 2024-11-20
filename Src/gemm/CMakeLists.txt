@@ -21,7 +21,7 @@ DEBUG -Xptxas -v -g -G
 )
 
 target_link_libraries( 
-GEMM
+gemm
 ${CUDA_CUDA_LIBRARY}
 ${CUDA_CUDART_LIBRARY}
 ${CUDA_CURAND_LIBRARY}
@@ -32,7 +32,7 @@ ${GLEW_DEBUG_LIBRARIES}
 )
 
 target_link_libraries( 
-GEMM
+gemm
 ${CUDA_CUDA_LIBRARY}
 ${CUDA_CUDART_LIBRARY}
 ${CUDA_CURAND_LIBRARY}
