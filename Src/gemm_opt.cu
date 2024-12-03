@@ -21,9 +21,42 @@
 
 #include <stdio.h>
 
-int gemm()
+__global__ void gemm_opt(float* A, float* B, float* C, int N)
 {
-	printf("Hello world!\n");
+	// Define block and thread indices
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-	return 0;
+	// Allocate shared memory
+	__shared__ float s_A[BDIMY][BDIMX];
+	__shared__ float s_B[BDIMY][BDIMX];
+
+	// Accumulate partial sum in register
+	float sum = 0.0f;
+
+	// Loop over tiles
+	for (int t = 0; t < N; t += BDIMX)
+	{
+		// Load tiles into shared memory
+		s_A[threadIdx.y][threadIdx.x] = A[row * N + t + threadIdx.x];
+		s_B[threadIdx.y][threadIdx.x] = B[(t + threadIdx.y) * N + col];
+
+		// Synchronize threads
+		__syncthreads();
+
+		// Accumulate partial sum
+		for (int i = 0; i < BDIMX; i++)
+		{
+			sum += s_A[threadIdx.y][i] * s_B[i][threadIdx.x];
+		}
+
+		// Synchronize threads
+		__syncthreads();
+	}
+
+	// Write to global memory
+	if (row < N && col < N)
+	{
+		C[row * N + col] = sum;
+	}
 }

@@ -7,9 +7,18 @@
 
 #include <stdio.h>
 
-int gemm_naive()
+__global__ void gemm_naive(float* A, float* B, float* C, int N)
 {
-	printf("Hello world!\n");
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-	return 0;
+	if (row < N && col < N)
+	{
+		float sum = 0.0f;
+		for (int i = 0; i < N; i++)
+		{
+			sum += A[row * N + i] * B[i * N + col];
+		}
+		C[row * N + col] = sum;
+	}
 }
