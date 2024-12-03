@@ -25,7 +25,7 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-lnvToolExt -gencode arch=compute_52,code
 
 if (WINDOWS)
     set(CUDA_TOOLKIT_SAMPLES_DIR "C:/ProgramData/NVIDIA Corporation/CUDA Samples/v10.1")
-    add_definitions(-DBUILD_THIRDPARTY:BOOL=ON)
+    add_definitions(-DBUILD_THIRDPARTY=ON)
 else (WINDOWS)
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX11)
