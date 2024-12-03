@@ -1,18 +1,12 @@
 # Include directories
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Src
   ${CUDA_INCLUDE_DIRS}
-  ${SOURCE_DIR}
-  ${CUDA_TOOLKIT_INCLUDE}
-  ${NVTX_INCLUDE_DIR}
-  ${NVML_INCLUDE_DIR}
-  ${FREEGLUT_INCLUDE_DIR}
-  ${GLEW_INCLUDE_DIR}
 )
 
 # Collect headers and source files
-file(GLOB HEADERS *.h *.cuh)
-file(GLOB SOURCES *.cpp *.cu)
+file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cuh)
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cu)
 
 # Group headers in IDEs
 source_group("Headers" FILES ${HEADERS})
@@ -21,18 +15,13 @@ source_group("Headers" FILES ${HEADERS})
 add_library(gemm_naive_lib STATIC Src/gemm_naive.cu)
 add_library(gemm_opt_lib STATIC Src/gemm_opt.cu)
 add_library(gemm_cpu_lib STATIC Src/gemm_cpu.c)
+
+# CUDA properties for libraries
 set_target_properties(gemm_naive_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(gemm_opt_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(gemm_cpu_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Executable
 add_executable(benchmark Src/benchmark.cu)
-
-# Set CUDA as the language for all targets using CUDA files
-set_target_properties(gemm_naive_lib PROPERTIES LINKER_LANGUAGE CUDA)
-set_target_properties(gemm_opt_lib PROPERTIES LINKER_LANGUAGE CUDA)
-set_target_properties(gemm_cpu_lib PROPERTIES LINKER_LANGUAGE CUDA)
-set_target_properties(benchmark PROPERTIES LINKER_LANGUAGE CUDA)
 
 # Set properties for benchmark executable
 set_target_properties(benchmark PROPERTIES
