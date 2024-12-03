@@ -7,9 +7,9 @@
 
 #include <stdio.h>
 
-int main()
+int gemm_naive()
 {
-	printf("\nHello world!\n");
-	
+	printf("Hello world!\n");
+
 	return 0;
-} 
+}
