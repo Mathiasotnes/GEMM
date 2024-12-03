@@ -1,8 +1,11 @@
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Include directories
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/Src
+  ${SOURCE_DIR}
   ${CUDA_INCLUDE_DIRS}
   ${CUDA_TOOLKIT_INCLUDE}
+  ${CUDA_TOOLKIT_SAMPLES_DIR}/common/inc
   ${NVTX_INCLUDE_DIR}
   ${NVML_INCLUDE_DIR}
   ${FREEGLUT_INCLUDE_DIR}
@@ -10,8 +13,8 @@ include_directories(
 )
 
 # Collect headers and source files
-file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cuh)
-file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cu)
+file(GLOB HEADERS ${SOURCE_DIR}/*.h ${SOURCE_DIR}/*.cuh)
+file(GLOB SOURCES ${SOURCE_DIR}/*.cpp ${SOURCE_DIR}/*.cu)
 
 # Group headers in IDEs
 source_group("Headers" FILES ${HEADERS})
@@ -30,9 +33,10 @@ set_target_properties(gemm_opt_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Executable
 cuda_add_executable(benchmark 
-  Src/benchmark.cu 
   ${HEADERS}
-  OPTIONS -arch=sm_52 --cudart=shared -lineinfo -use_fast_math
+  benchmark.cu
+  OPTIONS --cudart=shared  -lineinfo -arch sm_52 -use_fast_math
+  DEBUG -Xptxas -v -g -G 
 )
 
 # Set CUDA properties for benchmark executable
@@ -49,16 +53,8 @@ target_link_libraries(benchmark
   ${CUDA_CUDART_LIBRARY}
   ${CUDA_CUBLAS_LIBRARIES}
   ${CUDA_CURAND_LIBRARY}
-  $<$<CONFIG:Debug>:${NVML_DEBUG_LIBRARIES} ${NVTX_DEBUG_LIBRARIES}>
-  $<$<CONFIG:Release>:${FREEGLUT_RELEASE_LIBRARIES} ${GLEW_RELEASE_LIBRARIES}>
-)
-
-# Add compile options
-target_compile_options(benchmark PRIVATE
-    $<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math -lineinfo -arch=sm_52>
-)
-
-# Add definitions if necessary
-target_compile_definitions(benchmark PRIVATE
-    -DUSE_FAST_MATH
+  ${NVML_DEBUG_LIBRARIES}
+  ${NVTX_DEBUG_LIBRARIES}
+  ${FREEGLUT_DEBUG_LIBRARIES}
+  ${GLEW_DEBUG_LIBRARIES}
 )
