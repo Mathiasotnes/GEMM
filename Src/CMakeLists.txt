@@ -19,13 +19,13 @@ file(GLOB SOURCES ${SOURCE_DIR}/*.cpp ${SOURCE_DIR}/*.cu)
 # Group headers in IDEs
 source_group("Headers" FILES ${HEADERS})
 
-# Find CUDA (modern CMake can find CUDA without the FindCUDA module)
+# Find CUDA
 find_package(CUDA REQUIRED)
 
 # Libraries
-cuda_add_library(gemm_naive_lib STATIC Src/gemm_naive.cu OPTIONS -arch=sm_52)
-cuda_add_library(gemm_opt_lib STATIC Src/gemm_opt.cu OPTIONS -arch=sm_52)
-cuda_add_library(gemm_cpu_lib STATIC Src/gemm_cpu.c)
+cuda_add_library(gemm_naive_lib STATIC gemm_naive.cu OPTIONS -arch=sm_52)
+cuda_add_library(gemm_opt_lib STATIC gemm_opt.cu OPTIONS -arch=sm_52)
+cuda_add_library(gemm_cpu_lib STATIC gemm_cpu.c)
 
 # CUDA properties for libraries
 set_target_properties(gemm_naive_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
