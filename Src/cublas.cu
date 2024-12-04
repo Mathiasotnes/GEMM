@@ -17,7 +17,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-void gemm_cublas( float* A_d, float* B_d, float* C_d, int N )
+void gemm_cublas_kernel( float* A_d, float* B_d, float* C_d, int N )
 {
     cublasHandle_t handle;
     cudaStream_t stream;
@@ -54,4 +54,30 @@ void gemm_cublas( float* A_d, float* B_d, float* C_d, int N )
 
     cublasDestroy(handle);
     cudaStreamDestroy(stream);
+}
+
+void gemm_cublas( float* A, float* B, float* C, int N ) 
+{
+
+    // Allocate memory on device
+    float *A_d, *B_d, *C_d;
+    cudaMalloc(&A_d, N * N * sizeof(float));
+    cudaMalloc(&B_d, N * N * sizeof(float));
+    cudaMalloc(&C_d, N * N * sizeof(float));
+
+    // Copy data to device
+    cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice);
+
+    // Run kernel
+    gemm_cublas_kernel(A_d, B_d, C_d, N);
+
+    // Copy data back to host
+    cudaMemcpy(C, C_d, N * N * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Free memory on device
+    cudaFree(A_d);
+    cudaFree(B_d);
+    cudaFree(C_d);
+
 }
