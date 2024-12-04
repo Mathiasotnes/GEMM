@@ -24,6 +24,9 @@
 #include <helper_functions.h>
 #include <helper_cuda.h> 
 
+#define BDIMX 16
+#define BDIMY 8
+
 __global__ void gemm_opt(float* A, float* B, float* C, int N)
 {
 	// Define block and thread indices
