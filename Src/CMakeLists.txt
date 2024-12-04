@@ -29,7 +29,7 @@ cuda_add_library(cpu_lib STATIC cpu.cu OPTIONS -arch=sm_52)
 cuda_add_library(cublas_lib STATIC cublas.cu OPTIONS -arch=sm_52)
 
 # C
-add_library(cblas_lib STATIC cblas.c OPTIONS -arch=sm_52)
+add_library(cblas_lib STATIC cblas.c)
 
 # CUDA properties for libraries
 set_target_properties(naive_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
