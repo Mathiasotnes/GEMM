@@ -40,7 +40,7 @@ LOCAL gemm_method_t methods[] = {
     // {gemm_cublas,       "cuBLAS"         }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
-LOCAL int sizes[]       = { 16, 32, 64, 128, 256 };
+LOCAL int sizes[]       = { 16, 32 };
 LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 
 
@@ -48,7 +48,8 @@ LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 /* Local Function Prototypes                                                            */
 /****************************************************************************************/
 
-LOCAL int compare_matrices(float* mat1, float* mat2, int N);
+LOCAL int   compare_matrices    ( float* mat1, float* mat2, int N );
+LOCAL void  print_matrix        ( float* mat, int N );
 
 
 /****************************************************************************************/
@@ -85,6 +86,8 @@ int main() {
 
         // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
+        print("Reference result:\n");
+        print_matrix(C_ref, N);
 
         for ( int method_idx = 0; method_idx < num_methods; ++method_idx ) {
             gemm_func_t func = methods[method_idx].func;
@@ -114,6 +117,10 @@ int main() {
                 printf("Size: %d, Method: %s, Time: %.3f ms\n", N, method, ms);
                 fprintf(result_file, "%d,%s,%.3f\n", N, method, ms);
             }
+
+            // Print matrices
+            printf("\r\nResult with method %s:\n", method);
+            print_matrix(C, N);
 
             // Clean up events
             cudaEventDestroy(start);
@@ -156,3 +163,18 @@ LOCAL int compare_matrices(float* mat1, float* mat2, int N) {
     return 1;
 }
 
+/**
+ * @brief Prints a matrix to the console
+ * 
+ * @param mat   Matrix to print
+ * @param N     Size of matrix
+ */
+LOCAL void print_matrix(float* mat, int N) {
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            printf("%.2f ", mat[i * N + j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
