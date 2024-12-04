@@ -6,7 +6,7 @@
 /* Author: Mathias Otnes                                                                */
 /* year:   2024                                                                         */
 /*                                                                                      */
-/* Inspirations:                                                                        */
+/* Inspiration:                                                                         */
 /* - https://leimao.github.io/article/CUDA-Matrix-Multiplication-Optimization/          */
 /*                                                                                      */
 /****************************************************************************************/
