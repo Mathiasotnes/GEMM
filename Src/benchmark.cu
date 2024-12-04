@@ -34,10 +34,10 @@ typedef struct {
 
 
 LOCAL gemm_method_t methods[] = {
-    {gemm_cpu,     "CPU"            },
-    {gemm_naive,   "Naive GPU"      },
-    {gemm_opt,     "Optimized GPU"  },
-    {gemm_cublas,  "cuBLAS"         }
+    {gemm_cpu_wrapper,  "CPU"            },
+    {gemm_naive,        "Naive GPU"      },
+    {gemm_opt,          "Optimized GPU"  },
+    {gemm_cublas,       "cuBLAS"         }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
 LOCAL int sizes[]       = { 16, 32, 64, 128, 256 };

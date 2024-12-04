@@ -9,7 +9,8 @@
 #define GEMM_H
 
 void gemm_cublas(float* A, float* B, float* C, int N);
-void gemm_cpu(float* A_d, float* B_d, float* C_d, int N);
+void gemm_cpu(float* A, float* B, float* C, int N);
+void gemm_cpu_wrapper(float* A_d, float* B_d, float* C_d, int N);
 void gemm_naive(float* A_d, float* B_d, float* C_d, int N);
 void gemm_opt(float* A_d, float* B_d, float* C_d, int N);
 
