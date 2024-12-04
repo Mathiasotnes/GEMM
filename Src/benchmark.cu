@@ -1,4 +1,6 @@
 /****************************************************************************************/
+/* benchmark.cu                                                                         */
+/* -------------------------                                                            */
 /* Benchmark script for GEMM                                                            */
 /* -------------------------                                                            */
 /* Author: Mathias Otnes                                                                */
@@ -19,7 +21,14 @@ typedef struct {
     const char* name;
 } gemm_method_t;
 
-
+static gemm_method_t methods[] = {
+    {gemm_cpu,     "CPU"            },
+    {gemm_cblas,   "CBLAS"          },
+    {gemm_naive,   "Naive GPU"      },
+    {gemm_opt,     "Optimized GPU"  },
+    {gemm_cublas,  "cuBLAS"         }
+};
+static int num_methods = sizeof(methods) / sizeof(methods[0]);
 
 // Function to compare two matrices
 int compare_matrices(float* mat1, float* mat2, int N) {
@@ -112,13 +121,14 @@ int main() {
             // Check correctness
             int correct = compare_matrices(C_ref, C_test, N);
 
+            // Log result
             if (!correct) {
                 printf("Error in %s method\n", method_name);
             }
-
-            // Log results
-            printf("Size: %d, Method: %s, Time: %.3f ms, Correct: %s\n", N, method_name, milliseconds, correct ? "Yes" : "No");
-            fprintf(result_file, "%d,%s,%.3f,%s\n", N, method_name, milliseconds, correct ? "Yes" : "No");
+            else {
+                printf("Size: %d, Method: %s, Time: %.3f ms, Correct: %s\n", N, method_name, milliseconds, correct ? "Yes" : "No");
+                fprintf(result_file, "%d,%s,%.3f,%s\n", N, method_name, milliseconds, correct ? "Yes" : "No");
+            }
 
             // Clean up events
             cudaEventDestroy(start);
