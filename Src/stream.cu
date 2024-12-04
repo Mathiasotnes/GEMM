@@ -26,7 +26,6 @@ __global__ void gemm_stream_kernel(float* A, float* B, float* C, int N, int row_
         for (int k = 0; k < N; k++)
         {
             sum += A[row * N + k] * B[k * N + col];
-            _synchthreads();
         }
         C[row * N + col] = sum;
     }

@@ -16,98 +16,128 @@
 #include <stdio.h>
 #include "gemm.h"
 
-#define STREAMS 4 // Number of streams / tiles
+#define TILE_SIZE 16
 
-__global__ void gemm_stream_shmem_kernel(float* A, float* B, float* C, int N)
+__global__ void gemm_stream_shmem_kernel( float* A, float* B, float* C, int N )
 {
-    int row = blockIdx.y * blockDim.y + threadIdx.y; // Global row index
-    int col = blockIdx.x * blockDim.x + threadIdx.x; // Global column index
+    __shared__ float tile_A[TILE_SIZE][TILE_SIZE];
+    __shared__ float tile_B[TILE_SIZE][TILE_SIZE];
 
-    if (row < N && col < N)
-    {
-        float sum = 0.0f;
-        for (int k = 0; k < N; k++)
-        {
-            sum += A[row * N + k] * B[k * N + col];
+    int row = threadIdx.y + blockIdx.y * TILE_SIZE;
+    int col = threadIdx.x + blockIdx.x * TILE_SIZE;
+
+    float val = 0.0f;
+    for ( int i = 0; i < (N + TILE_SIZE -1)/ TILE_SIZE; i++ ) {
+        if(row < N && (i * TILE_SIZE + threadIdx.x) < N){
+            tile_A[threadIdx.y][threadIdx.x] = A[row * N + i * TILE_SIZE + threadIdx.x];
+        } 
+        
+        else {
+            tile_A[threadIdx.y][threadIdx.x] = 0.0f;
         }
-        C[row * N + col] = sum;
+
+        if(col < N && (i * TILE_SIZE + threadIdx.y) < N){
+            tile_B[threadIdx.y][threadIdx.x] = B[(i * TILE_SIZE + threadIdx.y) * N + col];
+        } 
+        
+        else {
+            tile_B[threadIdx.y][threadIdx.x] = 0.0f;
+        }
+        __syncthreads();
+        
+        for(int j = 0; j < TILE_SIZE; j++){
+            val += tile_A[threadIdx.y][j] * tile_B[j][threadIdx.x];
+        }
+        __syncthreads();
+    }
+    if ( row < N && col < N ) {
+        C[row * N + col] += val;
     }
 }
 
 void gemm_stream_shmem(float* A, float* B, float* C, int N)
 {
-    int tile_rows = N / STREAMS;
-    int remainder_rows = N % STREAMS;
-
     size_t matrix_size = N * N * sizeof(float);
 
-    // Allocate device memory for B once
-    float *d_B;
-    checkCudaErrors(cudaMalloc((void**)&d_B, matrix_size));
-    checkCudaErrors(cudaMemcpy(d_B, B, matrix_size, cudaMemcpyHostToDevice));
-
-    // Allocate device memory for A_tiles and C_tiles
-    float *d_A_tiles[STREAMS], *d_C_tiles[STREAMS];
-    cudaStream_t streams[STREAMS];
+    // Calculate the number of tiles
+    int num_tiles = (N + TILE_SIZE - 1) / TILE_SIZE;
 
     if ( VERBOSE ) {
-        printf("Launching stream kernel with %d streams\n", STREAMS);
+        printf("Launching stream shmem kernel with %d tiles\n", num_tiles);
     }
 
-    for (int i = 0; i < STREAMS; i++)
+    // Allocate device memory for A, B, and C
+    float *tile_A[num_tiles];
+    float *tile_B[num_tiles];
+    float *tile_C[num_tiles];
+    
+    for (int i = 0; i < num_tiles; i++)
+    {
+        checkCudaErrors(cudaMalloc((void**)&tile_A[i], TILE_SIZE * TILE_SIZE * sizeof(float)));
+        checkCudaErrors(cudaMalloc((void**)&tile_B[i], TILE_SIZE * TILE_SIZE * sizeof(float)));
+        checkCudaErrors(cudaMalloc((void**)&tile_C[i], TILE_SIZE * TILE_SIZE * sizeof(float)));
+    }
+
+
+    // Create streams
+    cudaStream_t streams[num_tiles];
+    for (int i = 0; i < num_tiles; i++)
     {
         checkCudaErrors(cudaStreamCreate(&streams[i]));
-
-        int rows_in_tile = tile_rows;
-        if (i == STREAMS - 1)
-        {
-            rows_in_tile += remainder_rows;
-        }
-        size_t tile_bytes = rows_in_tile * N * sizeof(float);
-
-        // Allocate device memory for A_tile and C_tile
-        checkCudaErrors(cudaMalloc((void**)&d_A_tiles[i], tile_bytes));
-        checkCudaErrors(cudaMalloc((void**)&d_C_tiles[i], tile_bytes));
     }
 
-    // For each tile
-    for (int i = 0; i < STREAMS; i++)
+    // This assumes that N is divisible by TILE_SIZE
+    int nRows = N / num_tiles;
+    int nCols = N / num_tiles;
+
+    // Launch kernels for each tile of C
+    int stream_idx = 0;
+    for (int row = 0; row < nRows; row++)
     {
-        int rows_in_tile = tile_rows;
-        if (i == STREAMS - 1)
+        for (int col = 0; col < nCols; col++)
         {
-            rows_in_tile += remainder_rows;
+            // Assign stream in a round-robin fashion
+            cudaStream_t stream = streams[stream_idx];
+
+            // Calculate tile offsets
+            int C_row_offset = row * TILE_SIZE;
+            int C_col_offset = col * TILE_SIZE;
+            int A_row_offset = C_row_offset;
+            int B_col_offset = C_col_offset;
+
+            // Copy part of A and B that makes up the tile to device memory
+            for (int i = 0; i < TILE_SIZE; i++)
+            {
+                int A_row = A_row_offset + i;
+                int B_col = B_col_offset + i;
+
+                checkCudaErrors(cudaMemcpyAsync(tile_A[stream_idx] + i * TILE_SIZE, A + A_row * N + B_col, TILE_SIZE * sizeof(float), cudaMemcpyHostToDevice, stream));
+                checkCudaErrors(cudaMemcpyAsync(tile_B[stream_idx] + i * TILE_SIZE, B + A_row * N + B_col, TILE_SIZE * sizeof(float), cudaMemcpyHostToDevice, stream));
+            }
+
+            // Kernel launch parameters
+            dim3 blockSize(TILE_SIZE, TILE_SIZE);
+            dim3 gridSize(1, 1);
+
+            // Launch kernel
+            gemm_stream_shmem_kernel<<<gridSize, blockSize, 0, stream>>>(tile_A[stream_idx], tile_B[stream_idx], tile_C[stream_idx], TILE_SIZE);
+            
+            stream_idx++;
         }
-        size_t tile_bytes = rows_in_tile * N * sizeof(float);
-
-        // Copy A_tile to device asynchronously
-        checkCudaErrors(cudaMemcpyAsync(d_A_tiles[i], A + i * tile_rows * N, tile_bytes, cudaMemcpyHostToDevice, streams[i]));
-
-        // Define grid and block dimensions
-        dim3 blockSize(16, 16);
-        dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (rows_in_tile + blockSize.y -1) / blockSize.y);
-
-        // Launch kernel in the stream
-        gemm_stream_shmem_kernel<<<gridSize, blockSize, 0, streams[i]>>>(d_A_tiles[i], d_B, d_C_tiles[i], N);
-
-        // Copy C_tile back to host asynchronously
-        checkCudaErrors(cudaMemcpyAsync(C + i * tile_rows * N, d_C_tiles[i], tile_bytes, cudaMemcpyDeviceToHost, streams[i]));
     }
 
-    // Wait for all streams to finish
-    for (int i = 0; i < STREAMS; i++)
+    // Synchronize streams
+    for (int i = 0; i < num_tiles; ++i)
     {
         checkCudaErrors(cudaStreamSynchronize(streams[i]));
-    }
-
-    // Free device memory and destroy streams
-    for (int i = 0; i < STREAMS; i++)
-    {
-        checkCudaErrors(cudaFree(d_A_tiles[i]));
-        checkCudaErrors(cudaFree(d_C_tiles[i]));
         checkCudaErrors(cudaStreamDestroy(streams[i]));
     }
 
-    // Free device memory for B
+    // Copy the result matrix C back to host memory
+    checkCudaErrors(cudaMemcpy(C, d_C, matrix_size, cudaMemcpyDeviceToHost));
+
+    // Free device memory
+    checkCudaErrors(cudaFree(d_A));
     checkCudaErrors(cudaFree(d_B));
+    checkCudaErrors(cudaFree(d_C));
 }

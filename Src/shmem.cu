@@ -1,8 +1,8 @@
 /****************************************************************************************/
 /* shmem.cu                                                                             */
-/* --------------------------------                                                     */
+/* ------------------------------------                                                 */
 /* Shared memory implementation of GEMM                                                 */
-/* --------------------------------                                                     */
+/* ------------------------------------                                                 */
 /* Author: Mathias Otnes                                                                */
 /* year:   2024                                                                         */
 /*                                                                                      */
@@ -27,7 +27,7 @@ __global__ void gemm_shared_kernel( float* A, float* B, float* C, int N )
     int col = threadIdx.x + blockIdx.x * TILE_SIZE;
 
     float val = 0.0f;
-    for(int i = 0; i < (N + TILE_SIZE -1)/ TILE_SIZE; i++){
+    for ( int i = 0; i < (N + TILE_SIZE -1)/ TILE_SIZE; i++ ) {
         if(row < N && (i * TILE_SIZE + threadIdx.x) < N){
             tile_A[threadIdx.y][threadIdx.x] = A[row * N + i * TILE_SIZE + threadIdx.x];
         } 
@@ -50,7 +50,7 @@ __global__ void gemm_shared_kernel( float* A, float* B, float* C, int N )
         }
         __syncthreads();
     }
-    if(row < N && col < N){
+    if ( row < N && col < N ) {
         C[row * N + col] = val;
     }
 }
