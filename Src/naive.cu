@@ -20,9 +20,9 @@ __global__ void gemm_naive_kernel( float* A_d, float* B_d, float* C_d, int N )
         float sum = 0.0f;
         for (int i = 0; i < N; i++)
         {
-            sum += A[row * N + i] * B[i * N + col];
+            sum += A_d[row * N + i] * B_d[i * N + col];
         }
-        C[row * N + col] = sum;
+        C_d[row * N + col] = sum;
     }
 }
 
@@ -30,9 +30,10 @@ void gemm_naive( float* A, float* B, float* C, int N )
 {
 
 	// Allocate memory on device
-	float* A_d = cudaMalloc(&A_d, N * N * sizeof(float));
-	float* B_d = cudaMalloc(&B_d, N * N * sizeof(float));
-	float* C_d = cudaMalloc(&C_d, N * N * sizeof(float));
+	float *A_d, *B_d, *C_d;
+	cudaMalloc(&A_d, N * N * sizeof(float));
+	cudaMalloc(&B_d, N * N * sizeof(float));
+	cudaMalloc(&C_d, N * N * sizeof(float));
 
 	// Copy data to device
 	cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice);
