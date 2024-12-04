@@ -109,6 +109,7 @@ int main() {
 
             // Call method
             func(A_d, B_d, C_d, N);
+            cudaDeviceSynchronize();
 
             // Stop timing
             cudaEventRecord(stop);
