@@ -77,9 +77,19 @@ int main() {
 
         // Device memory
         float *A_d, *B_d, *C_d;
-        cudaMalloc((void**)&A_d, matrix_size);
-        cudaMalloc((void**)&B_d, matrix_size);
-        cudaMalloc((void**)&C_d, matrix_size);
+        if (cudaMalloc((void**)&A_d, matrix_size) != cudaSuccess) {
+            printf("Error allocating device memory for A\n");
+            continue;
+        }
+        if (cudaMalloc((void**)&B_d, matrix_size) != cudaSuccess) {
+            printf("Error allocating device memory for B\n");
+            continue;
+        }
+
+        if (cudaMalloc((void**)&C_d, matrix_size) != cudaSuccess) {
+            printf("Error allocating device memory for C\n");
+            continue;
+        }
 
         // Initialize A and B
         for (int i = 0; i < N * N; ++i) {
