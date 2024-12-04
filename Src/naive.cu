@@ -8,6 +8,7 @@
 /********************************************************************/
 
 #include <cuda_runtime.h>
+#include <helper_cuda.h> 
 #include <stdio.h>
 
 __global__ void gemm_naive_kernel( float* A_d, float* B_d, float* C_d, int N )
@@ -31,13 +32,14 @@ void gemm_naive( float* A, float* B, float* C, int N )
 
 	// Allocate memory on device
 	float *A_d, *B_d, *C_d;
-	cudaMalloc(&A_d, N * N * sizeof(float));
-	cudaMalloc(&B_d, N * N * sizeof(float));
-	cudaMalloc(&C_d, N * N * sizeof(float));
+
+	checkCudaErrors( cudaMalloc(&A_d, N * N * sizeof(float)) );
+	checkCudaErrors( cudaMalloc(&B_d, N * N * sizeof(float)) );
+	checkCudaErrors( cudaMalloc(&C_d, N * N * sizeof(float)) );
 
 	// Copy data to device
-	cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice);
-	cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice);
+	checkCudaErrors( cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice) );
+	checkCudaErrors( cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice) );
 
 	// Kernel configuration
     dim3 blockSize(16, 16);
@@ -45,10 +47,10 @@ void gemm_naive( float* A, float* B, float* C, int N )
 
 	// Run kernel
     gemm_naive_kernel<<<gridSize, blockSize>>>(A_d, B_d, C_d, N);
-    cudaDeviceSynchronize();
+    checkCudaErrors( cudaDeviceSynchronize() );
 
 	// Copy data back to host
-	cudaMemcpy(C, C_d, N * N * sizeof(float), cudaMemcpyDeviceToHost);
+	checkCudaErrors( cudaMemcpy(C, C_d, N * N * sizeof(float), cudaMemcpyDeviceToHost) );
 
 	// Free memory on device
 	cudaFree(A_d);
