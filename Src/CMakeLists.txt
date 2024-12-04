@@ -25,11 +25,12 @@ find_package(CUDA REQUIRED)
 # Libraries
 cuda_add_library(gemm_naive_lib STATIC gemm_naive.cu OPTIONS -arch=sm_52)
 cuda_add_library(gemm_opt_lib STATIC gemm_opt.cu OPTIONS -arch=sm_52)
-cuda_add_library(gemm_cpu_lib STATIC gemm_cpu.c)
+cuda_add_library(gemm_cpu_lib STATIC gemm_cpu.cu OPTIONS -arch=sm_52)
 
 # CUDA properties for libraries
 set_target_properties(gemm_naive_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(gemm_opt_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(gemm_cpu_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Executable
 cuda_add_executable(benchmark 
