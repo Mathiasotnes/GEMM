@@ -88,7 +88,7 @@ void gemm_stream_shmem(float* A, float* B, float* C, int N)
         dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (rows_in_tile + blockSize.y -1) / blockSize.y);
 
         // Launch kernel in the stream
-        gemm_stream_kernel<<<gridSize, blockSize, 0, streams[i]>>>(d_A_tiles[i], d_B, d_C_tiles[i], N);
+        gemm_stream_shmem_kernel<<<gridSize, blockSize, 0, streams[i]>>>(d_A_tiles[i], d_B, d_C_tiles[i], N);
 
         // Copy C_tile back to host asynchronously
         checkCudaErrors(cudaMemcpyAsync(C + i * tile_rows * N, d_C_tiles[i], tile_bytes, cudaMemcpyDeviceToHost, streams[i]));
