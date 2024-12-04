@@ -27,6 +27,8 @@ typedef struct {
     const char* name;
 } gemm_method_t;
 
+#define VERBOSE 0
+
 
 /****************************************************************************************/
 /* Configuration                                                                        */
@@ -36,11 +38,11 @@ typedef struct {
 LOCAL gemm_method_t methods[] = {
     {gemm_cpu,          "CPU"            },
     {gemm_naive,        "Naive GPU"      },
-    {gemm_opt,          "Optimized GPU"  }
+    // {gemm_opt,          "Optimized GPU"  }
     // {gemm_cublas,       "cuBLAS"         }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
-LOCAL int sizes[]       = { 16, 32 };
+LOCAL int sizes[]       = { 16, 32, 64, 128, 256 };
 LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 
 
@@ -86,8 +88,11 @@ int main() {
 
         // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
-        printf("Reference result:\n");
-        print_matrix(C_ref, N);
+
+        if ( VERBOSE ) {
+            printf("Reference result:\n");
+            print_matrix(C_ref, N);
+        }
 
         for ( int method_idx = 0; method_idx < num_methods; ++method_idx ) {
             gemm_func_t func = methods[method_idx].func;
@@ -118,9 +123,10 @@ int main() {
                 fprintf(result_file, "%d,%s,%.3f\n", N, method, ms);
             }
 
-            // Print matrices
-            printf("\r\nResult with method %s:\n", method);
-            print_matrix(C, N);
+            if ( VERBOSE ) {
+                printf("\r\nResult with method %s:\n", method);
+                print_matrix(C, N);
+            }
 
             // Clean up events
             cudaEventDestroy(start);
