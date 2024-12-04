@@ -38,8 +38,9 @@ typedef struct {
 LOCAL gemm_method_t methods[] = {
     {gemm_cpu,          "CPU"               },
     {gemm_naive,        "Naive GPU"         },
-    {gemm_stream,       "Stream GPU"        },
-    {gemm_stream_shmem, "Stream ShMem GPU"  },
+    {gemm_shmem,        "ShMem GPU"         },
+    // {gemm_stream,       "Stream GPU"        },
+    // {gemm_stream_shmem, "Stream ShMem GPU"  },
     {gemm_cublas,       "cuBLAS"            }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
