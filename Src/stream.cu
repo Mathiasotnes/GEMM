@@ -15,7 +15,7 @@
 #define STREAMS 4
 #define TILE_SIZE 16
 
-__global__ void gemm_stream_kernel(float* A, float* B, float* C, int N)
+__global__ void gemm_stream_kernel(float* A, float* B, float* C, int N, int row_offset, int rows_in_tile)
 {
     int row = blockIdx.y * blockDim.y + threadIdx.y; // Global row index
     int col = blockIdx.x * blockDim.x + threadIdx.x; // Global column index
@@ -26,7 +26,7 @@ __global__ void gemm_stream_kernel(float* A, float* B, float* C, int N)
         for (int k = 0; k < N; k++)
         {
             sum += A[row * N + k] * B[k * N + col];
-            __synchthreads();
+            _synchthreads();
         }
         C[row * N + col] = sum;
     }
@@ -89,7 +89,7 @@ void gemm_stream( float* A, float* B, float* C, int N )
         dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (rows_in_tile + blockSize.y - 1) / blockSize.y);
 
         // Launch kernel in the stream
-        gemm_stream_kernel<<<gridSize, blockSize, 0, streams[i]>>>(d_A_tiles[i], d_B, d_C, N, row_offset, col_offset);
+        gemm_stream_kernel<<<gridSize, blockSize, 0, streams[i]>>>(d_A_tiles[i], d_B, d_C, N, row_offset, rows_in_tile);
     }
 
     // Wait for all streams to finish

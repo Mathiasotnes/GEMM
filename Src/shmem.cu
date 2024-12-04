@@ -18,7 +18,7 @@
 
 #define TILE_SIZE 16
 
-__global__ void MatrixMultiShared( float* A, float* B, float* C, int N )
+__global__ void gemm_shared_kernel( float* A, float* B, float* C, int N )
 {
     __shared__ float tile_A[TILE_SIZE][TILE_SIZE];
     __shared__ float tile_B[TILE_SIZE][TILE_SIZE];
@@ -77,7 +77,7 @@ void gemm_shmem( float* A, float* B, float* C, int N )
 	}
 
 	// Run kernel
-    gemm_naive_kernel<<<gridSize, blockSize>>>(A_d, B_d, C_d, N);
+    gemm_shared_kernel<<<gridSize, blockSize>>>(A_d, B_d, C_d, N);
 	cudaError_t err = cudaGetLastError();
 	if ( err != cudaSuccess ) {
 		printf("Kernel launch error: %s\n", cudaGetErrorString(err));
