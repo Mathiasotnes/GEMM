@@ -86,7 +86,7 @@ int main() {
 
         // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
-        print("Reference result:\n");
+        printf("Reference result:\n");
         print_matrix(C_ref, N);
 
         for ( int method_idx = 0; method_idx < num_methods; ++method_idx ) {
