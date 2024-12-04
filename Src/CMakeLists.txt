@@ -24,14 +24,14 @@ find_package(CUDA REQUIRED)
 
 # Library
 cuda_add_library(naive_lib STATIC naive.cu OPTIONS -arch=sm_52)
-cuda_add_library(opt_lib STATIC opt.cu OPTIONS -arch=sm_52)
+cuda_add_library(stream_shmem_lib STATIC stream_shmem.cu OPTIONS -arch=sm_52)
 cuda_add_library(cpu_lib STATIC cpu.cu OPTIONS -arch=sm_52)
 cuda_add_library(stream_lib STATIC stream.cu OPTIONS -arch=sm_52)
 cuda_add_library(cublas_lib STATIC cublas.cu OPTIONS -arch=sm_52)
 
 # CUDA properties for libraries
 set_target_properties(naive_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(opt_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(stream_shmem_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(cpu_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(stream_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(cublas_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
@@ -52,7 +52,7 @@ set_target_properties(benchmark PROPERTIES
 # Link libraries to the benchmark executable
 target_link_libraries(benchmark
   naive_lib
-  opt_lib
+  stream_shmem_lib
   cpu_lib
   stream_lib
   cublas_lib
