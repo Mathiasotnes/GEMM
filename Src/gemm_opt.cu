@@ -19,7 +19,10 @@
  * - Optimize specifically for A2000 GPU (dimensions, etc.)
  */
 
+#include <cuda_runtime.h>
 #include <stdio.h>
+#include <helper_functions.h>
+#include <helper_cuda.h> 
 
 __global__ void gemm_opt(float* A, float* B, float* C, int N)
 {

@@ -5,7 +5,10 @@
 /* year:   2024                                                     */
 /********************************************************************/
 
+#include <cuda_runtime.h>
 #include <stdio.h>
+#include <helper_functions.h>
+#include <helper_cuda.h> 
 
 __global__ void gemm_naive(float* A, float* B, float* C, int N)
 {
