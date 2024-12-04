@@ -58,6 +58,10 @@ void gemm_stream_shmem( float* A, float* B, float* C, int N )
     int num_tiles = (N + TILE_SIZE - 1) / TILE_SIZE;
     int num_streams = num_tiles;
 
+    if ( VERBOSE ) {
+        printf("Launching stream shmem kernel with %d streams\n", num_streams);
+    }
+
     // Allocate device memory for C
     float *C_d;
     checkCudaErrors(cudaMalloc((void**)&C_d, matrix_size));

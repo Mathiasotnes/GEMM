@@ -14,7 +14,7 @@
  * 1: Kernel and grid sizes
  * 2: Entire matrixes
  */
-#define VERBOSE 0
+#define VERBOSE 1
 
 void gemm_cublas            ( float* A, float* B, float* C, int N );
 void gemm_cpu               ( float* A, float* B, float* C, int N );
