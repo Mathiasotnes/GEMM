@@ -29,7 +29,7 @@
 #define BDIMX 16
 #define BDIMY 8
 
-__global__ void gemm_opt(float* A, float* B, float* C, int N)
+__global__ void gemm_opt_kernel(float* A, float* B, float* C, int N)
 {
 	// Define block and thread indices
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -67,4 +67,12 @@ __global__ void gemm_opt(float* A, float* B, float* C, int N)
 	{
 		C[row * N + col] = sum;
 	}
+}
+
+// Host wrapper function
+void gemm_opt(float* A_d, float* B_d, float* C_d, int N) {
+    dim3 blockSize(16, 16);
+    dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (N + blockSize.y - 1) / blockSize.y);
+    gemm_opt_kernel<<<gridSize, blockSize>>>(A_d, B_d, C_d, N);
+    cudaDeviceSynchronize();
 }
