@@ -46,6 +46,10 @@ void gemm_stream(float* A, float* B, float* C, int N)
     float *d_A_tiles[STREAMS], *d_C_tiles[STREAMS];
     cudaStream_t streams[STREAMS];
 
+    if ( VERBOSE ) {
+        printf("Launching stream kernel with %d streams\n", STREAMS);
+    }
+
     for (int i = 0; i < STREAMS; i++)
     {
         checkCudaErrors(cudaStreamCreate(&streams[i]));
