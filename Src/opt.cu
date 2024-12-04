@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <helper_functions.h>
 #include <helper_cuda.h> 
-#inlcude "gemm.h"
+#include "gemm.h"
 
 #define BDIMX 16
 #define BDIMY 8
