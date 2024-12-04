@@ -23,7 +23,6 @@ typedef struct {
 
 static gemm_method_t methods[] = {
     {gemm_cpu,     "CPU"            },
-    {gemm_cblas,   "CBLAS"          },
     {gemm_naive,   "Naive GPU"      },
     {gemm_opt,     "Optimized GPU"  },
     {gemm_cublas,  "cuBLAS"         }

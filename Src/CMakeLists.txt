@@ -22,14 +22,11 @@ source_group("Headers" FILES ${HEADERS})
 # Find CUDA
 find_package(CUDA REQUIRED)
 
-# CUDA
+# Library
 cuda_add_library(naive_lib STATIC naive.cu OPTIONS -arch=sm_52)
 cuda_add_library(opt_lib STATIC opt.cu OPTIONS -arch=sm_52)
 cuda_add_library(cpu_lib STATIC cpu.cu OPTIONS -arch=sm_52)
 cuda_add_library(cublas_lib STATIC cublas.cu OPTIONS -arch=sm_52)
-
-# C
-add_library(cblas_lib STATIC cblas.c)
 
 # CUDA properties for libraries
 set_target_properties(naive_lib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
@@ -56,7 +53,6 @@ target_link_libraries(benchmark
   opt_lib
   cpu_lib
   cublas_lib
-  cblas_lib
   ${CUDA_CUDA_LIBRARY}
   ${CUDA_CUDART_LIBRARY}
   ${CUDA_CUBLAS_LIBRARIES}
