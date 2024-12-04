@@ -18,7 +18,7 @@
 
 #define TILE_SIZE 16
 
-__global__ void gemm_stream_shmem_kernel( float* A, float* B, float* C, int N, int C_row_offset, int C_col_offset )
+__global__ void gemm_stream_shmem_kernel( float* A_tile, float* B_tile, float* C, int N, int C_row_offset, int C_col_offset )
 {
     __shared__ float tile_A[TILE_SIZE][TILE_SIZE];
     __shared__ float tile_B[TILE_SIZE][TILE_SIZE];
@@ -26,53 +26,37 @@ __global__ void gemm_stream_shmem_kernel( float* A, float* B, float* C, int N, i
     int tx = threadIdx.x;
     int ty = threadIdx.y;
 
-    int row = C_row_offset + ty;
-    int col = C_col_offset + tx;
+    // Load tiles into shared memory
+    tile_A[ty][tx] = A_tile[ty * TILE_SIZE + tx];
+    tile_B[ty][tx] = B_tile[ty * TILE_SIZE + tx];
+    __syncthreads();
 
     float val = 0.0f;
 
-    for ( int i = 0; i < (N + TILE_SIZE -1)/ TILE_SIZE; i++ ) {
-        // Load tile from A
-        int A_col = i * TILE_SIZE + tx;
-        if(row < N && A_col < N){
-            tile_A[ty][tx] = A[row * N + A_col];
-        } 
-        else {
-            tile_A[ty][tx] = 0.0f;
-        }
-
-        // Load tile from B
-        int B_row = i * TILE_SIZE + ty;
-        if(col < N && B_row < N){
-            tile_B[ty][tx] = B[B_row * N + col];
-        } 
-        else {
-            tile_B[ty][tx] = 0.0f;
-        }
-        __syncthreads();
-
-        // Compute partial product
-        for(int k = 0; k < TILE_SIZE; k++){
-            val += tile_A[ty][k] * tile_B[k][tx];
-        }
-        __syncthreads();
+    // Compute the dot product for the tile
+    for (int k = 0; k < TILE_SIZE; k++)
+    {
+        val += tile_A[ty][k] * tile_B[k][tx];
     }
 
-    if ( row < N && col < N ) {
+    // Calculate global row and column indices
+    int row = C_row_offset + ty;
+    int col = C_col_offset + tx;
+
+    // Write the result to the global matrix C
+    if (row < N && col < N) {
         C[row * N + col] += val;
     }
 }
 
-
 void gemm_stream_shmem( float* A, float* B, float* C, int N )
 {
-    const int TILE_SIZE = 16;
-    const int num_streams = 4; // Adjust as needed
 
     size_t matrix_size = N * N * sizeof(float);
 
     // Calculate the number of tiles
     int num_tiles = (N + TILE_SIZE - 1) / TILE_SIZE;
+    int num_streams = num_tiles;
 
     // Allocate device memory for C
     float *C_d;
