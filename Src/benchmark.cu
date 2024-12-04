@@ -34,7 +34,7 @@ typedef struct {
 
 
 LOCAL gemm_method_t methods[] = {
-    {gemm_cpu_wrapper,  "CPU"            },
+    {gemm_cpu,          "CPU"            },
     {gemm_naive,        "Naive GPU"      },
     {gemm_opt,          "Optimized GPU"  },
     {gemm_cublas,       "cuBLAS"         }
@@ -57,6 +57,8 @@ LOCAL int compare_matrices(float* mat1, float* mat2, int N);
 
 int main() {
 
+    float ms;
+
     FILE* result_file = fopen("gemm_benchmark_results.csv", "w");
     if (!result_file) {
         printf("Error opening result file.\n");
@@ -70,46 +72,25 @@ int main() {
         int matrix_size = N * N * sizeof(float);
 
         // Host memory
-        float* A = (float*)malloc(matrix_size);
-        float* B = (float*)malloc(matrix_size);
-        float* C_ref = (float*)malloc(matrix_size);
-        float* C_test = (float*)malloc(matrix_size);
-
-        // Device memory
-        float *A_d, *B_d, *C_d;
-        if (cudaMalloc((void**)&A_d, matrix_size) != cudaSuccess) {
-            printf("Error allocating device memory for A\n");
-            continue;
-        }
-        if (cudaMalloc((void**)&B_d, matrix_size) != cudaSuccess) {
-            printf("Error allocating device memory for B\n");
-            continue;
-        }
-
-        if (cudaMalloc((void**)&C_d, matrix_size) != cudaSuccess) {
-            printf("Error allocating device memory for C\n");
-            continue;
-        }
+        float* A        = (float*)malloc(matrix_size);
+        float* B        = (float*)malloc(matrix_size);
+        float* C        = (float*)malloc(matrix_size);
+        float* C_ref    = (float*)malloc(matrix_size);
 
         // Initialize A and B
-        for (int i = 0; i < N * N; ++i) {
+        for ( int i = 0; i < N * N; ++i ) {
             A[i] = rand() / (float)RAND_MAX;
             B[i] = rand() / (float)RAND_MAX;
         }
 
-        cudaMemcpy(A_d, A, matrix_size, cudaMemcpyHostToDevice);
-        cudaMemcpy(B_d, B, matrix_size, cudaMemcpyHostToDevice);
-
         // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
 
-        for (int method_idx = 0; method_idx < num_methods; ++method_idx) {
+        for ( int method_idx = 0; method_idx < num_methods; ++method_idx ) {
             gemm_func_t func = methods[method_idx].func;
-            const char* method_name = methods[method_idx].name;
+            const char* method = methods[method_idx].name;
 
-            // Zero C_test and C_d
-            memset(C_test, 0, matrix_size);
-            cudaMemset(C_d, 0, matrix_size);
+            memset(C, 0, matrix_size);
 
             // Start timing
             cudaEvent_t start, stop;
@@ -118,28 +99,20 @@ int main() {
             cudaEventRecord(start);
 
             // Call method
-            func(A_d, B_d, C_d, N);
-            cudaDeviceSynchronize();
+            func(A, B, C, N);
 
             // Stop timing
             cudaEventRecord(stop);
             cudaEventSynchronize(stop);
-            float milliseconds = 0.0f;
-            cudaEventElapsedTime(&milliseconds, start, stop);
-
-            // Copy result back to host
-            cudaMemcpy(C_test, C_d, matrix_size, cudaMemcpyDeviceToHost);
-
-            // Check correctness
-            int correct = compare_matrices(C_ref, C_test, N);
+            cudaEventElapsedTime(&ms, start, stop);
 
             // Log result
-            if (!correct) {
-                printf("Error in %s method\n", method_name);
+            if ( !compare_matrices(C_ref, C, N) ) {
+                printf("Error in %s method\n", method);
             }
             else {
-                printf("Size: %d, Method: %s, Time: %.3f ms\n", N, method_name, milliseconds);
-                fprintf(result_file, "%d,%s,%.3f\n", N, method_name, milliseconds);
+                printf("Size: %d, Method: %s, Time: %.3f ms\n", N, method, ms);
+                fprintf(result_file, "%d,%s,%.3f\n", N, method, ms);
             }
 
             // Clean up events
@@ -148,13 +121,10 @@ int main() {
         }
 
         // Free memory
-        cudaFree(A_d);
-        cudaFree(B_d);
-        cudaFree(C_d);
         free(A);
         free(B);
+        free(C);
         free(C_ref);
-        free(C_test);
     }
 
     // Close result file

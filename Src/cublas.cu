@@ -17,21 +17,23 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-void gemm_cublas(float* A_d, float* B_d, float* C_d, int N)
+void gemm_cublas( float* A_d, float* B_d, float* C_d, int N )
 {
     cublasHandle_t handle;
     cudaStream_t stream;
 
-    // Step 1: Create cuBLAS handle and bind a stream
+    // Create cuBLAS handle and stream
     cublasCreate(&handle);
     cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
     cublasSetStream(handle, stream);
 
-    float alpha = 1.0f;
-    float beta = 0.0f;
-    int lda = N, ldb = N, ldc = N;
+    // Configure SGEMM
+    float alpha     = 1.0f;
+    float beta      = 0.0f;
+    int   lda       = N; 
+    int   ldb       = N; 
+    int   ldc       = N;
 
-    // Step 2: Call cuBLAS SGEMM with swapped order
     // To compute C = A * B in row-major, we call cublasSgemm with B and A swapped
     cublasStatus_t status = cublasSgemm(
         handle,
@@ -44,15 +46,12 @@ void gemm_cublas(float* A_d, float* B_d, float* C_d, int N)
         C_d, ldc                   // C matrix
     );
 
-    if (status != CUBLAS_STATUS_SUCCESS) {
+    if ( status != CUBLAS_STATUS_SUCCESS ) {
         printf("cuBLAS SGEMM failed\n");
     }
 
-    // Step 3: Synchronize to ensure computation is complete
     cudaStreamSynchronize(stream);
 
-    // Step 4: Clean up
     cublasDestroy(handle);
     cudaStreamDestroy(stream);
 }
-
