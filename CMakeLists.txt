@@ -25,7 +25,7 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-lnvToolExt -gencode arch=compute_52,code
 
 if (WINDOWS)
     set(CUDA_TOOLKIT_SAMPLES_DIR "C:/ProgramData/NVIDIA Corporation/CUDA Samples/v10.1")
-    add_definitions(-DBUILD_THIRDPARTY=ON)
+    add_definitions(-DBUILD_THIRDPARTY:BOOL=ON)
 else (WINDOWS)
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX11)
@@ -35,13 +35,19 @@ else (WINDOWS)
     elseif(COMPILER_SUPPORTS_CXX0X)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
     else()
-            message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
     endif()
-        
+    
     set(CUDA_TOOLKIT_SAMPLES_DIR ${CUDA_TOOLKIT_ROOT_DIR}/samples)
     set(CUDA_TOOLKIT_ROOT_DIR ${CUDA_TOOLKIT_ROOT_DIR})
 endif(WINDOWS)
-###################################################################
+
+# Additional libraries needed
+find_package(NVTX REQUIRED)
+find_package(FREEGLUT REQUIRED)
+
+# Use static CUDA runtime
+set(CUDA_USE_STATIC_CUDA_RUNTIME ON)
 
 # Subdirectories
-add_subdirectory (Src)
+add_subdirectory(Src)
