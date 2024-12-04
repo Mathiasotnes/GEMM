@@ -13,6 +13,10 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
+#include <cublas_v2.h>
+#include <cuda_runtime.h>
+#include <stdio.h>
+
 void gemm_cublas(float* A_d, float* B_d, float* C_d, int N)
 {
     cublasHandle_t handle;
@@ -23,35 +27,32 @@ void gemm_cublas(float* A_d, float* B_d, float* C_d, int N)
     cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
     cublasSetStream(handle, stream);
 
-    // Step 2: Set up constants and leading dimensions
     float alpha = 1.0f;
     float beta = 0.0f;
-    int lda = N;
-    int ldb = N;
-    int ldc = N;
+    int lda = N, ldb = N, ldc = N;
 
-    // Step 3: Call cuBLAS SGEMM
-    // cuBLAS is column-major by default. Since you're working with row-major matrices,
-    // transpose both matrices.
+    // Step 2: Call cuBLAS SGEMM with swapped order
+    // To compute C = A * B in row-major, we call cublasSgemm with B and A swapped
     cublasStatus_t status = cublasSgemm(
         handle,
-        CUBLAS_OP_T, CUBLAS_OP_T,  // Transpose both A and B for row-major compatibility
+        CUBLAS_OP_N, CUBLAS_OP_N,  // No transpose for both
         N, N, N,                   // M, N, K
-        &alpha,                    // Scalar for multiplication
-        B_d, ldb,                  // B device pointer, leading dimension ldb
-        A_d, lda,                  // A device pointer, leading dimension lda
-        &beta,                     // Scalar for accumulation
-        C_d, ldc                   // C device pointer, leading dimension ldc
+        &alpha,
+        B_d, ldb,                  // Note that B_d comes first (swap order)
+        A_d, lda,                  // A_d comes second
+        &beta,
+        C_d, ldc                   // C matrix
     );
 
     if (status != CUBLAS_STATUS_SUCCESS) {
         printf("cuBLAS SGEMM failed\n");
     }
 
-    // Step 4: Synchronize
+    // Step 3: Synchronize to ensure computation is complete
     cudaStreamSynchronize(stream);
 
-    // Step 5: Clean up
+    // Step 4: Clean up
     cublasDestroy(handle);
     cudaStreamDestroy(stream);
 }
+
