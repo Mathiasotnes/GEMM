@@ -13,6 +13,7 @@
 #include <math.h>
 #include <chrono>
 #include <cuda_runtime.h>
+#include <helper_cuda.h> 
 #include "gemm.h"
 
 /****************************************************************************************/
@@ -76,10 +77,15 @@ int main() {
         int matrix_size = N * N * sizeof(float);
 
         // Host memory
-        float* A        = (float*)malloc(matrix_size);
-        float* B        = (float*)malloc(matrix_size);
-        float* C        = (float*)malloc(matrix_size);
-        float* C_ref    = (float*)malloc(matrix_size);
+        float* A;
+        float* B;
+        float* C;
+        float* C_ref;
+
+        checkCudaErrors( cudaMallocHost((void**)&A, matrix_size) );
+        checkCudaErrors( cudaMallocHost((void**)&B, matrix_size) );
+        checkCudaErrors( cudaMallocHost((void**)&C, matrix_size) );
+        checkCudaErrors( cudaMallocHost((void**)&C_ref, matrix_size) );
 
         // Initialize A and B
         for ( int i = 0; i < N * N; ++i ) {
@@ -125,10 +131,11 @@ int main() {
         }
 
         // Free memory
-        free(A);
-        free(B);
-        free(C);
-        free(C_ref);
+        checkCudaErrors( cudaFreeHost(A) );
+        checkCudaErrors( cudaFreeHost(B) );
+        checkCudaErrors( cudaFreeHost(C) );
+        checkCudaErrors( cudaFreeHost(C_ref) );
+
     }
 
     // Close result file

@@ -42,7 +42,9 @@ void gemm_stream( float* A, float* B, float* C, int N )
 {
 
     float *d_a[STREAMS], *d_b[STREAMS], *d_c[STREAMS];
-    int streamSize = N / STREAMS;
+    int matrixSize = N * N;
+    int streamSize = matrixSize / STREAMS;
+    int matrixBytes = matrixSize * sizeof( float );
 	int streamBytes = streamSize * sizeof( int );
 
     if ( VERBOSE ) {
@@ -59,7 +61,7 @@ void gemm_stream( float* A, float* B, float* C, int N )
 	for ( int i = 0; i < STREAMS; i++ )
     {
         checkCudaErrors( cudaMalloc(&d_a[i], streamBytes) );
-        checkCudaErrors( cudaMalloc(&d_b[i], streamBytes) );
+        checkCudaErrors( cudaMalloc(&d_b[i], matrixBytes) );
         checkCudaErrors( cudaMalloc(&d_c[i], streamBytes) );
     }
 
@@ -72,7 +74,7 @@ void gemm_stream( float* A, float* B, float* C, int N )
     for ( int i = 0; i < STREAMS; i++ )
     {
         checkCudaErrors( cudaMemcpyAsync(d_a[i], A + i * streamSize, streamBytes, cudaMemcpyHostToDevice, stream[i]) );
-        checkCudaErrors( cudaMemcpyAsync(d_b[i], B + i * streamSize, streamBytes, cudaMemcpyHostToDevice, stream[i]) );
+        checkCudaErrors( cudaMemcpyAsync(d_b[i], B, matrixSize * sizeof(float), cudaMemcpyHostToDevice, stream[i]) );
 
         dim3 blockSize(16, 16);
         dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (N + blockSize.y - 1) / blockSize.y);
