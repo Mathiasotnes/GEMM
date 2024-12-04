@@ -14,7 +14,7 @@
 
 #define STREAMS 4
 
-__global__ void gemm_stream_kernel( float* A_d, float* B_d, float* C_d, int N )
+__global__ void gemm_stream_kernel( float* d_a, float* d_b, float* d_c, int N )
 {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -24,9 +24,9 @@ __global__ void gemm_stream_kernel( float* A_d, float* B_d, float* C_d, int N )
         float sum = 0.0f;
         for (int i = 0; i < N; i++)
         {
-            sum += A_d[row * N + i] * B_d[i * N + col];
+            sum += d_a[row * N + i] * d_b[i * N + col];
         }
-        C_d[row * N + col] = sum;
+        d_c[row * N + col] = sum;
     }
 }
 
@@ -41,7 +41,7 @@ __global__ void gemm_stream_kernel( float* A_d, float* B_d, float* C_d, int N )
 void gemm_stream( float* A, float* B, float* C, int N ) 
 {
 
-    int *d_a[STREAMS], *d_b[STREAMS], *d_c[STREAMS];
+    float *d_a[STREAMS], *d_b[STREAMS], *d_c[STREAMS];
     int streamSize = N / STREAMS;
 	int streamBytes = streamSize * sizeof( int );
 
@@ -94,11 +94,6 @@ void gemm_stream( float* A, float* B, float* C, int N )
     }
 
     checkCudaErrors( cudaDeviceSynchronize() );
-
-	// Free memory on device
-	checkCudaErrors( cudaFree(A_d) );
-	checkCudaErrors( cudaFree(B_d) );
-	checkCudaErrors( cudaFree(C_d) );
 
     for ( int i = 0; i < STREAMS; i++ )
     {
