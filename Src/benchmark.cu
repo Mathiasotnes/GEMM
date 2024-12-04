@@ -14,6 +14,12 @@
 #include <cuda_runtime.h>
 #include "gemm.h"
 
+/****************************************************************************************/
+/* Local Definitions & Datatypes                                                        */
+/****************************************************************************************/
+
+#define LOCAL static
+
 typedef void (*gemm_func_t)(float*, float*, float*, int);
 
 typedef struct {
@@ -21,58 +27,53 @@ typedef struct {
     const char* name;
 } gemm_method_t;
 
-static gemm_method_t methods[] = {
+
+/****************************************************************************************/
+/* Configuration                                                                        */
+/****************************************************************************************/
+
+
+LOCAL gemm_method_t methods[] = {
     {gemm_cpu,     "CPU"            },
     {gemm_naive,   "Naive GPU"      },
     {gemm_opt,     "Optimized GPU"  },
     {gemm_cublas,  "cuBLAS"         }
 };
-static int num_methods = sizeof(methods) / sizeof(methods[0]);
+LOCAL int num_methods = sizeof(methods) / sizeof(methods[0]);
 
-// Function to compare two matrices
-int compare_matrices(float* mat1, float* mat2, int N) {
-    float epsilon = 1e-5f;
-    for (int i = 0; i < N * N; ++i) {
-        if (fabsf(mat1[i] - mat2[i]) > epsilon) {
-            return 0;
-        }
-    }
-    return 1;
-}
+
+/****************************************************************************************/
+/* Local Function Prototypes                                                            */
+/****************************************************************************************/
+
+LOCAL int compare_matrices(float* mat1, float* mat2, int N);
+
+
+/****************************************************************************************/
+/* Main Program                                                                         */
+/****************************************************************************************/
 
 int main() {
-    // List of methods
-    gemm_method_t methods[] = {
-        {gemm_cpu_wrapper, "CPU"},
-        {gemm_naive, "Naive GPU"},
-        {gemm_opt, "Optimized GPU"}
-    };
-    int num_methods = sizeof(methods) / sizeof(methods[0]);
 
-    // List of sizes
-    int sizes[] = {256, 512, 1024};
-    int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
-
-    // Open result file
     FILE* result_file = fopen("gemm_benchmark_results.csv", "w");
     if (!result_file) {
         printf("Error opening result file.\n");
         return -1;
     }
-    // Write header
+
     fprintf(result_file, "Size,Method,Time(ms),Correct\n");
 
     for (int size_idx = 0; size_idx < num_sizes; ++size_idx) {
         int N = sizes[size_idx];
         int matrix_size = N * N * sizeof(float);
 
-        // Allocate host memory
+        // Host memory
         float* A = (float*)malloc(matrix_size);
         float* B = (float*)malloc(matrix_size);
         float* C_ref = (float*)malloc(matrix_size);
         float* C_test = (float*)malloc(matrix_size);
 
-        // Allocate device memory
+        // Device memory
         float *A_d, *B_d, *C_d;
         cudaMalloc((void**)&A_d, matrix_size);
         cudaMalloc((void**)&B_d, matrix_size);
@@ -84,11 +85,10 @@ int main() {
             B[i] = rand() / (float)RAND_MAX;
         }
 
-        // Copy to device
         cudaMemcpy(A_d, A, matrix_size, cudaMemcpyHostToDevice);
         cudaMemcpy(B_d, B, matrix_size, cudaMemcpyHostToDevice);
 
-        // Compute reference result
+        // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
 
         for (int method_idx = 0; method_idx < num_methods; ++method_idx) {
@@ -149,3 +149,27 @@ int main() {
 
     return 0;
 }
+
+
+/****************************************************************************************/
+/* Local Function Definitions                                                           */
+/****************************************************************************************/
+
+/**
+ * @brief Compares two matrices element-wise
+ * 
+ * @param mat1  Matrix 1
+ * @param mat2  Matrix 2
+ * @param N     Size of matrices
+ * @return      1 if matrices are equal, 0 otherwise
+ */
+LOCAL int compare_matrices(float* mat1, float* mat2, int N) {
+    float epsilon = 1e-5f;
+    for (int i = 0; i < N * N; ++i) {
+        if (fabsf(mat1[i] - mat2[i]) > epsilon) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
