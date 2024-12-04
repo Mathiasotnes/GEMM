@@ -63,7 +63,7 @@ int main() {
         return -1;
     }
 
-    fprintf(result_file, "Size,Method,Time(ms),Correct\n");
+    fprintf(result_file, "Size,Method,Time(ms)\n");
 
     for (int size_idx = 0; size_idx < num_sizes; ++size_idx) {
         int N = sizes[size_idx];
@@ -127,8 +127,8 @@ int main() {
                 printf("Error in %s method\n", method_name);
             }
             else {
-                printf("Size: %d, Method: %s, Time: %.3f ms, Correct: %s\n", N, method_name, milliseconds, correct ? "Yes" : "No");
-                fprintf(result_file, "%d,%s,%.3f,%s\n", N, method_name, milliseconds, correct ? "Yes" : "No");
+                printf("Size: %d, Method: %s, Time: %.3f ms\n", N, method_name, milliseconds);
+                fprintf(result_file, "%d,%s,%.3f\n", N, method_name, milliseconds);
             }
 
             // Clean up events

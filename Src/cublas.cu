@@ -21,7 +21,7 @@ void gemm_cublas(float* A_d, float* B_d, float* C_d, int N)
     // To use row-major data, we need to adjust the operation
     cublasSgemm(
         handle,
-        CUBLAS_OP_N, CUBLAS_OP_N,  // No transpose
+        CUBLAS_OP_T, CUBLAS_OP_T,  // Transpose
         N, N, N,                   // M, N, K
         &alpha,
         A_d, N,                    // A device pointer, leading dimension
