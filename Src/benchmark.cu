@@ -37,6 +37,7 @@ typedef struct {
 LOCAL gemm_method_t methods[] = {
     {gemm_cpu,          "CPU"            },
     {gemm_naive,        "Naive GPU"      },
+    {gemm_stream,       "Stream GPU"     },
     // {gemm_opt,          "Optimized GPU"  }
     // {gemm_cublas,       "cuBLAS"         }
 };
@@ -89,7 +90,7 @@ int main() {
         // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
 
-        if ( VERBOSE > 1) {
+        if ( VERBOSE > 1 ) {
             printf("Reference result:\n");
             print_matrix(C_ref, N);
         }
@@ -105,7 +106,7 @@ int main() {
             auto end = std::chrono::high_resolution_clock::now();
 
             std::chrono::duration<double, std::milli> elapsed = end - start;
-            ms = elapsed.count(); // Convert to milliseconds
+            ms = elapsed.count();
 
             // Log result
             if ( !compare_matrices(C_ref, C, N) ) {

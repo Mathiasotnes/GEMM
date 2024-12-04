@@ -8,11 +8,18 @@
 #ifndef GEMM_H
 #define GEMM_H
 
+/**
+ * Verbosity:
+ * 0: No output
+ * 1: Kernel and grid sizes
+ * 2: Entire matrixes
+ */
 #define VERBOSE 1
 
 void gemm_cublas    ( float* A, float* B, float* C, int N );
 void gemm_cpu       ( float* A, float* B, float* C, int N );
-void gemm_naive     ( float* A_d, float* B_d, float* C_d, int N );
-void gemm_opt       ( float* A_d, float* B_d, float* C_d, int N );
+void gemm_naive     ( float* A, float* B, float* C, int N );
+void gemm_stream    ( float* A, float* B, float* C, int N );
+void gemm_opt       ( float* A, float* B, float* C, int N );
 
 #endif // GEMM_H
