@@ -8,6 +8,8 @@
 #ifndef GEMM_H
 #define GEMM_H
 
+#define VERBOSE 1
+
 void gemm_cublas    ( float* A, float* B, float* C, int N );
 void gemm_cpu       ( float* A, float* B, float* C, int N );
 void gemm_naive     ( float* A_d, float* B_d, float* C_d, int N );

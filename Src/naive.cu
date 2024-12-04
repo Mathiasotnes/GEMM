@@ -10,6 +10,7 @@
 #include <cuda_runtime.h>
 #include <helper_cuda.h> 
 #include <stdio.h>
+#include "gemm.h"
 
 __global__ void gemm_naive_kernel( float* A_d, float* B_d, float* C_d, int N )
 {
@@ -45,16 +46,24 @@ void gemm_naive( float* A, float* B, float* C, int N )
     dim3 blockSize(16, 16);
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (N + blockSize.y - 1) / blockSize.y);
 
+	if ( VERBOSE ) {
+		printf("Launching naive kernel with grid size %d, %d and block size %d, %d\n", gridSize.x, gridSize.y, blockSize.x, blockSize.y);
+	}
+
 	// Run kernel
     gemm_naive_kernel<<<gridSize, blockSize>>>(A_d, B_d, C_d, N);
+	cudaError_t err = cudaGetLastError();
+	if ( err != cudaSuccess ) {
+		printf("Kernel launch error: %s\n", cudaGetErrorString(err));
+	}
     checkCudaErrors( cudaDeviceSynchronize() );
 
 	// Copy data back to host
 	checkCudaErrors( cudaMemcpy(C, C_d, N * N * sizeof(float), cudaMemcpyDeviceToHost) );
 
 	// Free memory on device
-	cudaFree(A_d);
-	cudaFree(B_d);
-	cudaFree(C_d);
+	checkCudaErrors( cudaFree(A_d) );
+	checkCudaErrors( cudaFree(B_d) );
+	checkCudaErrors( cudaFree(C_d) );
 
 }

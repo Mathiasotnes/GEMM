@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <chrono>
 #include <cuda_runtime.h>
 #include "gemm.h"
 
@@ -27,8 +28,6 @@ typedef struct {
     const char* name;
 } gemm_method_t;
 
-#define VERBOSE 0
-
 
 /****************************************************************************************/
 /* Configuration                                                                        */
@@ -42,7 +41,7 @@ LOCAL gemm_method_t methods[] = {
     // {gemm_cublas,       "cuBLAS"         }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
-LOCAL int sizes[]       = { 16, 32, 64, 128, 256 };
+LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024 };
 LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 
 
@@ -61,6 +60,7 @@ LOCAL void  print_matrix        ( float* mat, int N );
 int main() {
 
     float ms;
+    struct timespec start, end;
 
     FILE* result_file = fopen("gemm_benchmark_results.csv", "w");
     if (!result_file) {
@@ -89,7 +89,7 @@ int main() {
         // Calculate reference result
         gemm_cpu(A, B, C_ref, N);
 
-        if ( VERBOSE ) {
+        if ( VERBOSE > 1) {
             printf("Reference result:\n");
             print_matrix(C_ref, N);
         }
@@ -100,19 +100,12 @@ int main() {
 
             memset(C, 0, matrix_size);
 
-            // Start timing
-            cudaEvent_t start, stop;
-            cudaEventCreate(&start);
-            cudaEventCreate(&stop);
-            cudaEventRecord(start);
-
-            // Call method
+            auto start = std::chrono::high_resolution_clock::now();
             func(A, B, C, N);
+            auto end = std::chrono::high_resolution_clock::now();
 
-            // Stop timing
-            cudaEventRecord(stop);
-            cudaEventSynchronize(stop);
-            cudaEventElapsedTime(&ms, start, stop);
+            std::chrono::duration<double, std::milli> elapsed = end - start;
+            ms = elapsed.count(); // Convert to milliseconds
 
             // Log result
             if ( !compare_matrices(C_ref, C, N) ) {
@@ -123,14 +116,11 @@ int main() {
                 fprintf(result_file, "%d,%s,%.3f\n", N, method, ms);
             }
 
-            if ( VERBOSE ) {
+            if ( VERBOSE > 1 ) {
                 printf("\r\nResult with method %s:\n", method);
                 print_matrix(C, N);
             }
 
-            // Clean up events
-            cudaEventDestroy(start);
-            cudaEventDestroy(stop);
         }
 
         // Free memory

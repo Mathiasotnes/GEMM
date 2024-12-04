@@ -9,6 +9,7 @@
 
 #include <cuda_runtime.h>
 #include <stdio.h>
+#include "gemm.h"
 
 void gemm_cpu(float* A, float* B, float* C, int N)
 {
