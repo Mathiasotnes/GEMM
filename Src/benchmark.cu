@@ -50,7 +50,7 @@ int main() {
     int num_methods = sizeof(methods) / sizeof(methods[0]);
 
     // List of sizes
-    int sizes[] = {256, 512, 1024, 2048, 4096};
+    int sizes[] = {256, 512, 1024};
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
 
     // Open result file
