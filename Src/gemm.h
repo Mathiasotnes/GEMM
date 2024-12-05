@@ -20,7 +20,7 @@
  * 1: Kernel and grid sizes
  * 2: Entire matrixes
  */
-#define VERBOSE     1
+#define VERBOSE     0
 
 /**
  * Number of streams to use for the stream version of the GEMM algorithm.

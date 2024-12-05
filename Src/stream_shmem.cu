@@ -53,32 +53,28 @@ void gemm_stream_shmem( float* A, float* B, float* C, int N )
         printf("Launching stream shmem kernel with %d streams\n", num_streams);
     }
 
-    // Allocate device memory for C
+    // Memory allocation
     float *C_d;
     checkCudaErrors(cudaMalloc((void**)&C_d, matrix_size));
     checkCudaErrors(cudaMemcpy(C_d, C, matrix_size, cudaMemcpyHostToDevice));
 
-    // Allocate arrays for tiles and streams
     float **tile_A = new float*[num_streams];
     float **tile_B = new float*[num_streams];
     cudaStream_t *streams = new cudaStream_t[num_streams];
 
-    // Allocate device memory for tiles and create streams
-    for (int i = 0; i < num_streams; i++)
-    {
+    // Initialize streams
+    for ( int i = 0; i < num_streams; i++ ) {
         checkCudaErrors(cudaMalloc((void**)&tile_A[i], TILE_SIZE * TILE_SIZE * sizeof(float)));
         checkCudaErrors(cudaMalloc((void**)&tile_B[i], TILE_SIZE * TILE_SIZE * sizeof(float)));
         checkCudaErrors(cudaStreamCreate(&streams[i]));
     }
 
     int stream_idx = 0;
-    for (int row = 0; row < num_tiles; row++)
-    {
-        for (int col = 0; col < num_tiles; col++)
-        {
+    for ( int row = 0; row < num_tiles; row++ ) {
+        for ( int col = 0; col < num_tiles; col++ ) {
             cudaStream_t stream = streams[stream_idx];
 
-            // Calculate tile offsets
+            // Tile offsets
             int C_row_offset = row * TILE_SIZE;
             int C_col_offset = col * TILE_SIZE;
             int A_row_offset = C_row_offset;
@@ -86,71 +82,62 @@ void gemm_stream_shmem( float* A, float* B, float* C, int N )
             int B_row_offset = 0;
             int B_col_offset = C_col_offset;
 
-            // Copy tiles to device
             // Copy tile from A
-            for (int i = 0; i < TILE_SIZE; i++)
-            {
+            for ( int i = 0; i < TILE_SIZE; i++ ) {
                 int A_row = A_row_offset + i;
-                if (A_row < N)
-                {
+                if ( A_row < N ) {
                     checkCudaErrors(cudaMemcpyAsync(
                         tile_A[stream_idx] + i * TILE_SIZE,
                         A + A_row * N + A_col_offset,
                         TILE_SIZE * sizeof(float),
                         cudaMemcpyHostToDevice, stream));
                 }
-                else
-                {
+
+                else {
                     checkCudaErrors(cudaMemsetAsync(tile_A[stream_idx] + i * TILE_SIZE, 0, TILE_SIZE * sizeof(float), stream));
                 }
             }
 
             // Copy tile from B
-            for (int i = 0; i < TILE_SIZE; i++)
-            {
+            for ( int i = 0; i < TILE_SIZE; i++ ) {
                 int B_row = B_row_offset + i;
-                if (B_row < N)
-                {
+                if ( B_row < N ) {
                     checkCudaErrors(cudaMemcpyAsync(
                         tile_B[stream_idx] + i * TILE_SIZE,
                         B + B_row * N + B_col_offset,
                         TILE_SIZE * sizeof(float),
                         cudaMemcpyHostToDevice, stream));
                 }
-                else
-                {
+
+                else {
                     checkCudaErrors(cudaMemsetAsync(tile_B[stream_idx] + i * TILE_SIZE, 0, TILE_SIZE * sizeof(float), stream));
                 }
             }
 
-            // Kernel launch parameters
+            // Launch kernel
             dim3 blockSize(TILE_SIZE, TILE_SIZE);
             dim3 gridSize(1, 1);
-
-            // Launch kernel
             gemm_stream_shmem_kernel<<<gridSize, blockSize, 0, stream>>>(tile_A[stream_idx], tile_B[stream_idx], C_d, N, C_row_offset, C_col_offset);
 
-            // Update stream index
             stream_idx = (stream_idx + 1) % num_streams;
         }
     }
 
-    // Synchronize streams
-    for (int i = 0; i < num_streams; ++i)
-    {
+    // Wait for all streams to finish
+    for ( int i = 0; i < num_streams; ++i ) {
         checkCudaErrors(cudaStreamSynchronize(streams[i]));
     }
 
-    // Copy result back to host
+    // Device -> Host
     checkCudaErrors(cudaMemcpy(C, C_d, matrix_size, cudaMemcpyDeviceToHost));
 
-    // Free device memory and destroy streams
-    for (int i = 0; i < num_streams; i++)
-    {
+    // Memory deallocation
+    for ( int i = 0; i < num_streams; i++ ) {
         checkCudaErrors(cudaFree(tile_A[i]));
         checkCudaErrors(cudaFree(tile_B[i]));
         checkCudaErrors(cudaStreamDestroy(streams[i]));
     }
+    
     delete[] tile_A;
     delete[] tile_B;
     delete[] streams;

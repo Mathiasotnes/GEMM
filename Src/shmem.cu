@@ -87,5 +87,4 @@ void gemm_shmem( float* A, float* B, float* C, int N )
 	checkCudaErrors( cudaFree(A_d) );
 	checkCudaErrors( cudaFree(B_d) );
 	checkCudaErrors( cudaFree(C_d) );
-
 }

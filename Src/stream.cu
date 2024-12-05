@@ -20,11 +20,9 @@ __global__ void gemm_stream_kernel( float* A, float* B, float* C, int N, int row
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row < N && col < N)
-    {
+    if ( row < N && col < N ) {
         float sum = 0.0f;
-        for (int k = 0; k < N; k++)
-        {
+        for ( int k = 0; k < N; k++ ) {
             sum += A[row * N + k] * B[k * N + col];
         }
         C[row * N + col] = sum;
@@ -68,14 +66,14 @@ void gemm_stream( float* A, float* B, float* C, int N )
     }
 
     // Start DMA transfer and kernel for each stream
-    for (int i = 0; i < STREAMS; i++)
-    {
+    for ( int i = 0; i < STREAMS; i++ ) {
         int row_offset = i * tile_rows;
         int rows_in_tile = tile_rows;
-        if (i == STREAMS - 1)
-        {
+
+        if ( i == STREAMS - 1 ) {
             rows_in_tile += remainder_rows;
         }
+
         size_t tile_bytes = rows_in_tile * N * sizeof(float);
 
         // Host -> Device (Async DMA transfer)

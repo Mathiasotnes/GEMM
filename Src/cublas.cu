@@ -65,7 +65,7 @@ void gemm_cublas( float* A, float* B, float* C, int N )
     cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice);
 
-    // Run kernel
+    // Launch kernel
     gemm_cublas_kernel(A_d, B_d, C_d, N);
 
     // Device -> Host

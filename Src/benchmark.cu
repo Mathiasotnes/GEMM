@@ -40,8 +40,8 @@ LOCAL gemm_method_t methods[] = {
     // {gemm_cpu,          "CPU"               },
     {gemm_naive,        "Naive GPU"         },
     {gemm_shmem,        "ShMem GPU"         },
-    // {gemm_stream,       "Stream GPU"        },
-    // {gemm_stream_shmem, "Stream ShMem GPU"  },
+    {gemm_stream,       "Stream GPU"        },
+    {gemm_stream_shmem, "Stream ShMem GPU"  },
     {gemm_cublas,       "cuBLAS"            }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
@@ -61,19 +61,24 @@ LOCAL void  print_matrix        ( float* mat, int N );
 /* Main Program                                                                         */
 /****************************************************************************************/
 
-int main() {
-
+int main()
+{
     float ms;
     struct timespec start, end;
 
-    FILE* result_file = fopen("gemm_benchmark_results.csv", "w");
+    FILE* result_file = fopen("results.csv", "w");
     if (!result_file) {
         printf("Error opening result file.\n");
         return -1;
     }
 
+    // Header
     fprintf(result_file, "Size,Method,Time(ms)\n");
+    printf("-----------------------------------------------------------\n");
+    printf("%-6s | %-20s | %-10s\n", "Size", "Method", "Time(ms)");
+    printf("-----------------------------------------------------------\n");
 
+    // Run through all the sizes
     for (int size_idx = 0; size_idx < num_sizes; ++size_idx) {
         int N = sizes[size_idx];
         int matrix_size = N * N * sizeof(float);
@@ -96,7 +101,7 @@ int main() {
         }
 
         // Calculate reference result
-        gemm_cpu(A, B, C_ref, N);
+        gemm_naive(A, B, C_ref, N);
 
         if ( VERBOSE > 1 ) {
             printf("Reference result:\n");
@@ -121,8 +126,9 @@ int main() {
             if ( !compare_matrices(C_ref, C, N) ) {
                 printf("Error in %s method\n", method);
             }
+
             else {
-                printf("Size: %d, Method: %s, Time: %.3f ms\n", N, method, ms);
+                printf("%-6d | %-20s | %-10.3f\n", N, method, ms);
                 fprintf(result_file, "%d,%s,%.3f\n", N, method, ms);
             }
 
@@ -160,8 +166,8 @@ int main() {
  */
 LOCAL int compare_matrices(float* mat1, float* mat2, int N) {
     float epsilon = 1e-3f;
-    for (int i = 0; i < N * N; ++i) {
-        if (fabsf(mat1[i] - mat2[i]) > epsilon) {
+    for ( int i = 0; i < N * N; ++i ) {
+        if ( fabsf(mat1[i] - mat2[i]) > epsilon ) {
             printf("Error at index %d: %.2f != %.2f\n", i, mat1[i], mat2[i]);
             return 0;
         }
@@ -176,8 +182,8 @@ LOCAL int compare_matrices(float* mat1, float* mat2, int N) {
  * @param N     Size of matrix
  */
 LOCAL void print_matrix(float* mat, int N) {
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
+    for ( int i = 0; i < N; ++i ) {
+        for ( int j = 0; j < N; ++j ) {
             printf("%.2f ", mat[i * N + j]);
         }
         printf("\n");
