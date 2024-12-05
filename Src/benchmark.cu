@@ -45,7 +45,7 @@ LOCAL gemm_method_t methods[] = {
     {gemm_cublas,       "cuBLAS"            }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
-LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
+LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024, 2048 };
 LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 
 
@@ -101,7 +101,7 @@ int main()
         }
 
         // Calculate reference result
-        gemm_naive(A, B, C_ref, N);
+        gemm_cpu(A, B, C_ref, N);
 
         if ( VERBOSE > 1 ) {
             printf("Reference result:\n");
@@ -124,7 +124,7 @@ int main()
 
             // Log result
             if ( !compare_matrices(C_ref, C, N) ) {
-                printf("%-6d | %-20s | %-10.3f, %s\n", N, method, ms, "Error");
+                printf("%-6d | %-20s | %-10.3f - ( %s )\n", N, method, ms, "Error");
             }
 
             else {
