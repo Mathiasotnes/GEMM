@@ -37,7 +37,7 @@ typedef struct {
 
 
 LOCAL gemm_method_t methods[] = {
-    // {gemm_cpu,          "CPU"               },
+    {gemm_cpu,          "CPU"               },
     {gemm_naive,        "Naive"             },
     {gemm_shmem,        "ShMem"             },
     {gemm_stream,       "Stream"            },
@@ -125,6 +125,7 @@ int main()
             // Log result
             if ( !compare_matrices(C_ref, C, N) ) {
                 printf("%-6d | %-20s | %-10.3f - ( %s )\n", N, method, ms, "Error");
+                fprintf(result_file, "%d,%s,%.3f\n", N, method, -1.0f);
             }
 
             else {
