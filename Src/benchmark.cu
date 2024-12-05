@@ -168,7 +168,9 @@ LOCAL int compare_matrices(float* mat1, float* mat2, int N) {
     float epsilon = 1e-3f;
     for ( int i = 0; i < N * N; ++i ) {
         if ( fabsf(mat1[i] - mat2[i]) > epsilon ) {
-            printf("Error at index %d: %.2f != %.2f\n", i, mat1[i], mat2[i]);
+            if ( VERBOSE > 1 ) {
+                printf("Error at index %d: %.2f != %.2f\n", i, mat1[i], mat2[i]);
+            }
             return 0;
         }
     }
