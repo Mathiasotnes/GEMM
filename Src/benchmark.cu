@@ -1,8 +1,9 @@
 /****************************************************************************************/
 /* benchmark.cu                                                                         */
-/* -------------------------                                                            */
-/* Benchmark script for GEMM                                                            */
-/* -------------------------                                                            */
+/* ------------------------------------------------------------------------------------ */
+/* Benchmark script for GEMM. This is used to time all the different GEMM               */
+/* implementations, check their correctness, and log it to a file for later inspection. */
+/* ------------------------------------------------------------------------------------ */
 /* Author: Mathias Otnes                                                                */
 /* Year:   2024                                                                         */
 /****************************************************************************************/
@@ -22,7 +23,7 @@
 
 #define LOCAL static
 
-typedef void (*gemm_func_t)(float*, float*, float*, int);
+typedef void (*gemm_func_t)( float*, float*, float*, int );
 
 typedef struct {
     gemm_func_t func;
@@ -36,7 +37,7 @@ typedef struct {
 
 
 LOCAL gemm_method_t methods[] = {
-    {gemm_cpu,          "CPU"               },
+    // {gemm_cpu,          "CPU"               },
     {gemm_naive,        "Naive GPU"         },
     {gemm_shmem,        "ShMem GPU"         },
     // {gemm_stream,       "Stream GPU"        },
@@ -44,7 +45,7 @@ LOCAL gemm_method_t methods[] = {
     {gemm_cublas,       "cuBLAS"            }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
-LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024, 2048 };
+LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 
 
@@ -102,6 +103,7 @@ int main() {
             print_matrix(C_ref, N);
         }
 
+        // Run through all the methods
         for ( int method_idx = 0; method_idx < num_methods; ++method_idx ) {
             gemm_func_t func = methods[method_idx].func;
             const char* method = methods[method_idx].name;
@@ -131,7 +133,7 @@ int main() {
 
         }
 
-        // Free memory
+        // Memory deallocation
         checkCudaErrors( cudaFreeHost(A) );
         checkCudaErrors( cudaFreeHost(B) );
         checkCudaErrors( cudaFreeHost(C) );
@@ -139,9 +141,7 @@ int main() {
 
     }
 
-    // Close result file
     fclose(result_file);
-
     return 0;
 }
 

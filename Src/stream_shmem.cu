@@ -1,22 +1,19 @@
 /****************************************************************************************/
 /* stream_shmem.cu                                                                      */
-/* --------------------------------                                                     */
-/* Optimized implementation of GEMM                                                     */
-/* --------------------------------                                                     */
+/* ------------------------------------------------------------------------------------ */
+/* Implementation of GEMM using streams and shared memory. The idea behind this was to  */
+/* transfer one tile of the tile-based matrix multiplication to the device at a time.   */
+/* And then start the kernel for that tile asynchronously. This turned out to run       */
+/* very slowly, and I therefore abandoned this approach.                                */
+/* ------------------------------------------------------------------------------------ */
 /* Author: Mathias Otnes                                                                */
 /* year:   2024                                                                         */
-/*                                                                                      */
-/* Inspiration:                                                                         */
-/* - https://leimao.github.io/article/CUDA-Matrix-Multiplication-Optimization/          */
-/*                                                                                      */
 /****************************************************************************************/
 
 #include <cuda_runtime.h>
 #include <helper_cuda.h> 
 #include <stdio.h>
 #include "gemm.h"
-
-#define TILE_SIZE 16
 
 __global__ void gemm_stream_shmem_kernel( float* A_tile, float* B_tile, float* C, int N, int C_row_offset, int C_col_offset )
 {
@@ -26,24 +23,20 @@ __global__ void gemm_stream_shmem_kernel( float* A_tile, float* B_tile, float* C
     int tx = threadIdx.x;
     int ty = threadIdx.y;
 
-    // Load tiles into shared memory
     tile_A[ty][tx] = A_tile[ty * TILE_SIZE + tx];
     tile_B[ty][tx] = B_tile[ty * TILE_SIZE + tx];
     __syncthreads();
 
     float val = 0.0f;
-
-    // Compute the dot product for the tile
     for (int k = 0; k < TILE_SIZE; k++)
     {
         val += tile_A[ty][k] * tile_B[k][tx];
     }
 
-    // Calculate global row and column indices
+    // Global coordinates
     int row = C_row_offset + ty;
     int col = C_col_offset + tx;
 
-    // Write the result to the global matrix C
     if (row < N && col < N) {
         C[row * N + col] += val;
     }
@@ -52,11 +45,9 @@ __global__ void gemm_stream_shmem_kernel( float* A_tile, float* B_tile, float* C
 void gemm_stream_shmem( float* A, float* B, float* C, int N )
 {
 
-    size_t matrix_size = N * N * sizeof(float);
-
-    // Calculate the number of tiles
-    int num_tiles = (N + TILE_SIZE - 1) / TILE_SIZE;
-    int num_streams = num_tiles;
+    size_t matrix_size  = N * N * sizeof(float);
+    int num_tiles       = (N + TILE_SIZE - 1) / TILE_SIZE;
+    int num_streams     = num_tiles;
 
     if ( VERBOSE ) {
         printf("Launching stream shmem kernel with %d streams\n", num_streams);
