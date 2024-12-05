@@ -38,10 +38,10 @@ typedef struct {
 
 LOCAL gemm_method_t methods[] = {
     // {gemm_cpu,          "CPU"               },
-    {gemm_naive,        "Naive GPU"         },
-    {gemm_shmem,        "ShMem GPU"         },
-    {gemm_stream,       "Stream GPU"        },
-    {gemm_stream_shmem, "Stream ShMem GPU"  },
+    {gemm_naive,        "Naive"             },
+    {gemm_shmem,        "ShMem"             },
+    {gemm_stream,       "Stream"            },
+    {gemm_stream_shmem, "Stream ShMem"      },
     {gemm_cublas,       "cuBLAS"            }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
@@ -124,7 +124,7 @@ int main()
 
             // Log result
             if ( !compare_matrices(C_ref, C, N) ) {
-                printf("Error in %s method\n", method);
+                printf("%-6d | %-20s | %-10.3f, %s\n", N, method, ms, "Error");
             }
 
             else {
