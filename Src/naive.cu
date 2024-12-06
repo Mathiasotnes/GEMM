@@ -45,7 +45,7 @@ void gemm_naive( float* A, float* B, float* C, int N )
 	checkCudaErrors( cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice) );
 
 	// Launch kernel
-    dim3 blockSize(16, 16);
+    dim3 blockSize(TILE_SIZE, TILE_SIZE);
     dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (N + blockSize.y - 1) / blockSize.y);
 
 	if ( VERBOSE ) {
@@ -53,7 +53,7 @@ void gemm_naive( float* A, float* B, float* C, int N )
 	}
 
     gemm_naive_kernel<<<gridSize, blockSize>>>(A_d, B_d, C_d, N);
-	
+
 	cudaError_t err = cudaGetLastError();
 	if ( err != cudaSuccess ) {
 		printf("Kernel launch error: %s\n", cudaGetErrorString(err));
