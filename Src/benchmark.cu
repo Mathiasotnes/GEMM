@@ -45,7 +45,7 @@ LOCAL gemm_method_t methods[] = {
     {gemm_cublas,       "cuBLAS"            }
 };
 LOCAL int num_methods   = sizeof(methods) / sizeof(methods[0]);
-LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024, 2048 };
+LOCAL int sizes[]       = { 16, 32, 64, 128, 256, 512, 1024 };
 LOCAL int num_sizes     = sizeof(sizes) / sizeof(sizes[0]);
 
 

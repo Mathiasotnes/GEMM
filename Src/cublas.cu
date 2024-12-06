@@ -12,15 +12,12 @@
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
+#include "gemm.h"
 
-void gemm_cublas_kernel( float* A_d, float* B_d, float* C_d, int N )
+void gemm_cublas( float* A, float* B, float* C, int N ) 
 {
     cublasHandle_t  handle;
     cudaStream_t    stream;
-
-    cublasCreate(&handle);
-    cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
-    cublasSetStream(handle, stream);
 
     // Configure SGEMM to match our problem
     float alpha     = 1.0f;
@@ -29,6 +26,20 @@ void gemm_cublas_kernel( float* A_d, float* B_d, float* C_d, int N )
     int   ldb       = N; 
     int   ldc       = N;
 
+    cublasCreate(&handle);
+    cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
+    cublasSetStream(handle, stream);
+
+    // Memory allocation
+    float *A_d, *B_d, *C_d;
+    cudaMalloc(&A_d, N * N * sizeof(float));
+    cudaMalloc(&B_d, N * N * sizeof(float));
+    cudaMalloc(&C_d, N * N * sizeof(float));
+
+    // Host -> Device
+    cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice);
+    
     // To compute C = A * B in row-major, we call cublasSgemm with B and A swapped, because
     // cuBLAS assumes column-major order.
     cublasStatus_t status = cublasSgemm(
@@ -50,23 +61,6 @@ void gemm_cublas_kernel( float* A_d, float* B_d, float* C_d, int N )
 
     cublasDestroy(handle);
     cudaStreamDestroy(stream);
-}
-
-void gemm_cublas( float* A, float* B, float* C, int N ) 
-{
-
-    // Memory allocation
-    float *A_d, *B_d, *C_d;
-    cudaMalloc(&A_d, N * N * sizeof(float));
-    cudaMalloc(&B_d, N * N * sizeof(float));
-    cudaMalloc(&C_d, N * N * sizeof(float));
-
-    // Host -> Device
-    cudaMemcpy(A_d, A, N * N * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(B_d, B, N * N * sizeof(float), cudaMemcpyHostToDevice);
-
-    // Launch kernel
-    gemm_cublas_kernel(A_d, B_d, C_d, N);
 
     // Device -> Host
     cudaMemcpy(C, C_d, N * N * sizeof(float), cudaMemcpyDeviceToHost);
