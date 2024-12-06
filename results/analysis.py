@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 #*************************************************************************************** #
 # analysis.py                                                                            #
 # -------------------------------------------------------------------------------------- #
 # This script reads the CSV file "gemm_benchmark_results.csv", and prints summary stats. #
-# It shows a table of sizes vs methods, highlighting the fastest time in green.          #
+# It shows a table of sizes vs methods, highlighting the fastest time and errors.        #
 # -------------------------------------------------------------------------------------- #
 # Author: Mathias Otnes                                                                  #
 # Year:   2024                                                                           #
@@ -16,10 +15,11 @@ from collections import defaultdict
 # Configuration                                                                           #
 # *************************************************************************************** #
 
-FILE_NAME = "results_old.csv"
+FILE_NAME   = "results_32.csv"
 
-GREEN = "\033[32m"
-RESET = "\033[0m"
+GREEN       = "\033[32m"
+RED         = "\033[31m"
+RESET       = "\033[0m"
 
 # *************************************************************************************** #
 # Implementation                                                                          #
@@ -39,11 +39,11 @@ def load_data(filename):
     return data, sorted(methods_set)
 
 def print_table(data, methods):
-    method_col_width = max(len(m) for m in methods)
+    method_col_width = 12
     size_col_width = 4
-    time_col_width = 10
+    time_col_width = 12
 
-    header = f"| {'Size'.ljust(size_col_width)} | " + "  | ".join(m.ljust(method_col_width) for m in methods) + "  |"
+    header = f"| {'Size'.ljust(size_col_width)} | " + " | ".join(m.ljust(method_col_width) for m in methods) + " |"
     line_length = len(header)
     divider = "-" * line_length
 
@@ -51,19 +51,24 @@ def print_table(data, methods):
     print(header)
     print(divider)
 
-    # Print rows
     for size in sorted(data.keys()):
         entries = data[size]
-        fastest_time = min(entries, key=lambda x: x[1])[1]
+        valid_times = [t for _, t in entries if t >= 0]
+        fastest_time = min(valid_times) if valid_times else None
+
         row = f"| {str(size).ljust(size_col_width)} | "
-        times_str = []
         method_to_time = dict(entries)
+        times_str = []
         for m in methods:
             t = method_to_time[m]
-            time_str = f"{t:.3f}".rjust(time_col_width)
-            if abs(t - fastest_time) < 1e-9:
-                time_str = f"{GREEN}{time_str}{RESET}"
+            if t < 0:
+                time_str = f"{RED}{'Error'.rjust(time_col_width)}{RESET}"
+            else:
+                time_str = f"{t:.3f}".rjust(time_col_width)
+                if fastest_time is not None and abs(t - fastest_time) < 1e-9:
+                    time_str = f"{GREEN}{time_str}{RESET}"
             times_str.append(time_str)
+
         row += " | ".join(times_str) + " |"
         print(row)
 

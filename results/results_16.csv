@@ -1,0 +1,49 @@
+Size,Method,Time(ms)
+16,CPU,0.001
+16,Naive,0.718
+16,ShMem,0.839
+16,Stream,-1.000
+16,Stream ShMem,0.490
+16,cuBLAS,635.981
+32,CPU,0.012
+32,Naive,0.809
+32,ShMem,0.655
+32,Stream,-1.000
+32,Stream ShMem,-1.000
+32,cuBLAS,1.144
+64,CPU,0.125
+64,Naive,0.570
+64,ShMem,0.832
+64,Stream,-1.000
+64,Stream ShMem,-1.000
+64,cuBLAS,1.092
+128,CPU,1.245
+128,Naive,0.448
+128,ShMem,0.449
+128,Stream,-1.000
+128,Stream ShMem,-1.000
+128,cuBLAS,1.367
+256,CPU,11.684
+256,Naive,0.957
+256,ShMem,0.975
+256,Stream,-1.000
+256,Stream ShMem,-1.000
+256,cuBLAS,1.759
+512,CPU,146.255
+512,Naive,2.095
+512,ShMem,1.893
+512,Stream,-1.000
+512,Stream ShMem,-1.000
+512,cuBLAS,1.607
+1024,CPU,1173.361
+1024,Naive,6.600
+1024,ShMem,6.952
+1024,Stream,-1.000
+1024,Stream ShMem,-1.000
+1024,cuBLAS,2.939
+2048,CPU,26316.467
+2048,Naive,200.012
+2048,ShMem,138.989
+2048,Stream,-1.000
+2048,Stream ShMem,-1.000
+2048,cuBLAS,7.887
